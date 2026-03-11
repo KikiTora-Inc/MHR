@@ -69,6 +69,11 @@ def compute_part_weights(groups, skin_weights, hard_assignment=False):
     If hard_assignment is True, only the primary influence (first column) is
     used: the weight matrix is replaced by ones in the first column and zeros
     elsewhere, so each vertex contributes exactly 1.0 to its dominant joint.
+
+    Returns:
+        weights: (N_groups, N_vertices) array of per-vertex weights.
+        vertex_indices: dict mapping each group key to the vertex indices
+            with non-zero weight in that group.
     """
     if hard_assignment:
         effective_weights = np.zeros_like(skin_weights.weight)
@@ -77,11 +82,15 @@ def compute_part_weights(groups, skin_weights, hard_assignment=False):
         effective_weights = skin_weights.weight
 
     weights = []
-    for joint_indices in groups.values():
+    vertex_indices = {}
+    for group_key, joint_indices in groups.items():
         masks = [skin_weights.index == j for j in joint_indices]
         combined_mask = reduce(np.logical_or, masks)
-        weights.append((combined_mask * effective_weights).sum(axis=1))
-    return np.asarray(weights)
+        part_weight = (combined_mask * effective_weights).sum(axis=1)
+        weights.append(part_weight)
+        vertex_indices[group_key] = np.nonzero(part_weight)[0]
+
+    return np.asarray(weights), vertex_indices
 
 
 
@@ -92,8 +101,8 @@ if __name__ == "__main__":
     mesh = trimesh.Trimesh(vertices=character.mesh.vertices, faces=character.mesh.faces)
 
     groups = build_joint_groups(character.skeleton.joint_names)
-    part_weights = compute_part_weights(groups, character.skin_weights, hard_assignment=False)
+    part_weights, vertex_indices = compute_part_weights(groups, character.skin_weights, hard_assignment=True)
     mesh.visual.vertex_colors = (part_weights.T @ TAB20_COLORS * 255).astype(np.uint8)
 
-    output_path = "/tmp/colored_mesh_part_soft.ply"
-    mesh.export(output_path)
+    mesh.export("/tmp/segmented_template.ply")
+    np.savez("/tmp/part_segments.npz", **vertex_indices)
