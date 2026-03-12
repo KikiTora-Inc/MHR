@@ -25,6 +25,8 @@ import numpy as np
 import torch
 import trimesh
 
+import pymomentum.geometry as pym_geometry
+
 from mhr.mhr import MHR
 
 # Joint name substrings for grouping
@@ -74,7 +76,7 @@ def joint_group_key(name: str) -> str:
     return key
 
 
-def build_joint_groups(joint_names):
+def build_joint_groups(joint_names: list[str]) -> dict[str, list[int]]:
     """Group joint indices by their semantic group key."""
     groups = defaultdict(list)
     for idx, name in enumerate(joint_names):
@@ -82,7 +84,11 @@ def build_joint_groups(joint_names):
     return groups
 
 
-def compute_part_weights(groups, skin_weights, hard_assignment=False):
+def compute_part_weights(
+    groups: dict[str, list[int]],
+    skin_weights: pym_geometry.SkinWeights,
+    hard_assignment: bool = False,
+) -> tuple[np.ndarray, dict[str, np.ndarray]]:
     """Compute per-vertex weight for each joint group by summing member weights.
 
     If hard_assignment is True, only the primary influence (first column) is
