@@ -1,6 +1,6 @@
 [project]
 authors = [{name = "MHR Contributors"}]
-dependencies = ["torch", "trimesh>=4.8.3,<5"]
+dependencies = ["torch", "trimesh>=4.8.3,<5", "smplx>=0.1.28,<0.2", "pyarrow>=23.0.1,<24", "scikit-learn>=1.8.0,<2", "matplotlib>=3.10.8,<4", "pillow>=12.1.1,<13"]
 name = "mhr"
 requires-python = ">= 3.11"
 dynamic = ["version"]
@@ -31,8 +31,8 @@ version-file = "mhr/_version.py"
 packages = ["mhr"]
 
 [tool.pixi.workspace]
-channels = ["conda-forge"]
-platforms = ["osx-arm64", "linux-64"]
+channels = ["https://prefix.dev/conda-forge"]
+platforms = ["linux-64"]
 
 [tool.pixi.tasks]
 demo = { cmd = "python demo.py", description = "Run demo script" }
@@ -52,13 +52,17 @@ hatchling = "*"
 hatch-vcs = "*"
 
 [tool.pixi.dependencies]
-pymomentum = ">=0.1.90"
+pymomentum-gpu = ">=0.1.90"
+pytorch-gpu = "*"
 
 [tool.pixi.feature.py312.dependencies]
 python = "3.12.*"
 
 [tool.pixi.feature.py313.dependencies]
 python = "3.13.*"
+
+[tool.pixi.system-requirements]
+cuda = "12.0"
 
 [tool.pixi.environments]
 default = ["py312"]
